@@ -1,0 +1,91 @@
+<template>
+  <div class="app slds-p-around_x-large">
+    <div class="slds-form-element">
+      <label
+        class="slds-form-element__label"
+        for="combobox"
+      >
+        {label}
+      </label>
+      <div class="slds-form-element__control">
+        <div class="slds-combobox_container">
+          <div class={comboxBoxClass} aria-expanded={ariaExapanded} aria-haspopup="listbox" role="combobox">
+            <div class="slds-combobox__form-element slds-input-has-icon slds-input-has-icon_right" role="none">
+              <input
+                type="text"
+                class="slds-input slds-combobox__input"
+                id="combobox"
+                aria-autocomplete="list"
+                aria-controls="listbox"
+                autocomplete="off"
+                role="textbox"
+                placeholder={placeholder}
+                onfocus={handleFocus}
+                onblur={handleBlur}
+                oninput={handleInput}
+                onkeydown={handleKeyDown}
+                value={value}
+                readonly
+              />
+              <span class="slds-icon_container slds-input__icon slds-input__icon_right">
+                <lightning-icon
+                  icon-name="utility:search"
+                  alternative-text="Search"
+                  title="Search"
+                  size="x-small"
+                ></lightning-icon>
+              </span>
+            </div>
+            <div id="listbox-id-3" class="slds-dropdown slds-dropdown_length-5 slds-dropdown_fluid" role="listbox"
+              onmousedown={handleComboboxMouseDown} onmouseup={handleComboboxMouseUp}>
+              <ul class="slds-listbox slds-listbox_vertical" role="group" aria-label="Group One">
+                <template for:each={menuOptions} for:item="menuOption" for:index="index">
+                  <li role="presentation" key={menuOption.index} class="slds-listbox__item"
+                    if:true={menuOption.options.length}>
+                    <div id={menuOption.index}
+                      class="slds-media slds-listbox__option slds-listbox__option_plain slds-media_small"
+                      role="presentation">
+                      <h3 class="slds-listbox__option-header" role="presentation">
+                        {menuOption.name}
+                      </h3>
+                    </div>
+                  </li>
+                  <template for:each={menuOption.options} for:item="option" for:index="index">
+                    <li role="presentation" key={option.value} class="slds-listbox__item">
+                      <div id={option.value} data-value={option.value} data-name={option.label}
+                        data-option-id={option.id} onclick={handleOptionClick} class={option.classes} role="option"
+                        aria-checked={option.selected}>
+                        <span class="slds-media__figure slds-listbox__option-icon">
+												<span class="slds-icon_container" if:true={option.selected}>
+													<lightning-icon
+														icon-name="utility:check"
+														alternative-text="Select"
+														title="Select"
+														size="x-small"
+														class="option-selected-icon"
+													></lightning-icon>
+												</span>
+                        </span>
+                        <span class="slds-media__body">
+										      <span class="slds-truncate option-value-text" title={option.label}>{option.label}</span>
+                        <span class="slds-listbox__option-meta">{option.subtitle}</span>
+                        </span>
+                      </div>
+                    </li>
+                  </template>
+                </template>
+                <template if:false={searchResultsCount}>
+                  <li role="presentation">
+                    <span class="slds-media slds-listbox__option_entity" role="option">
+                                <span if:false={loading} class="slds-media__body">No results.</span>
+                    </span>
+                  </li>
+                </template>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>

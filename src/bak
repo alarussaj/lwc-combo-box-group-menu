@@ -1,0 +1,267 @@
+import { LightningElement, api, track } from "lwc";
+
+const KEY_ARROW_UP = 38;
+const KEY_ARROW_DOWN = 40;
+const KEY_ENTER = 13;
+
+export default class MenuComboBox extends LightningElement {
+  @api label = "";
+  @api placeholder = "";
+
+  get menuOptions() {
+    return this._menuOptions ?? [];
+  }
+
+  get value() {
+    if (!this._hasFocus && this._value) {
+      return this._value;
+    }
+    return null;
+  }
+
+  @api
+  set menuOptions(menuOptions = []) {
+    const self = this;
+    [...menuOptions].forEach((menuOption, i) => {
+      const options = menuOption.options.map((option, j) => ({
+        ...option,
+        selected: false,
+        id: i > 0 ? i + j + i : i + j,
+        get classes() {
+          let cls = 'menu-option-options slds-media slds-listbox__option slds-listbox__option_entity slds-listbox__option_has-meta menu-options';
+          if (self._focusedResultIndex === (i > 0 ? i + j + i : i + j)) {
+              cls += ' slds-has-focus';
+          }
+          return cls;  
+        },
+      }));
+      this._searchResultsCount += options.length;
+      this._menuOptions.push({
+        name: menuOption.name,
+        options: options,
+      });
+    });
+    this._defaultMenuOptions = this._menuOptions;
+  }
+
+  get selectedOptions() {
+    const selectedOptions = this._options.filter((option) => {
+      return option.selected;
+    });
+    return selectedOptions ?? [];
+  }
+
+  get selectedOptionsCount() {
+    return this.selectedOptions.length;
+  }
+
+    // observer = (mutations) => new MutationObserver((mutations) => {
+    //   mutations.forEach(mu => {
+    //     if (mu.type !== "attributes" && mu.attributeName !== "class") return;
+    //     console.log("class was modified!");
+    //   });
+    // });
+
+    // observer = (mutations) => {
+    //   new MutationObserver((mutations) => {
+    //     this.mutations.forEach(mu => {
+    //       if (mu.type !== "attributes" && mu.attributeName !== "class") return;
+    //       console.log("class was modified!");
+    //     });
+    //   });
+    // };
+
+    comboBoxKeyDownListenter = (event) => {
+        if (event.keyCode === KEY_ARROW_DOWN) {
+          //const elem = this.template.querySelectorAll(".slds-has-focus")?.[0];
+          //console.log("e", elem.parentNode);
+        }
+    };
+
+  renderedCallback() {
+    
+    if (this._isFirstRender) {
+        this._isFirstRender = false;
+        this._listBox = this.template.querySelector('[role="listbox"]');
+        //console.log(el.getBoundingClientRect());
+        // const observer = new MutationObserver((mutations) => {
+        //   mutations.forEach(mu => {
+        //     if (mu.type !== "attributes" && mu.attributeName !== "class") return;
+        //     console.log(mu);
+        //   });
+        // });
+        this.template.querySelector("input").addEventListener('keydown', this.comboBoxKeyDownListenter);
+    }
+    this.elemOptions = this.template.querySelectorAll(".menu-options");
+  }
+
+  // Private properties
+  @track _menuOptions = [];
+  @track __defaultMenuOptions;
+  _isFirstRender = true;
+  _searchTerm;
+  _cleanSearchTerm;
+  _hasFocus = false;
+  _cancelBlur = false;
+  _focusedResultIndex = null;
+  _searchResultsCount = 0;
+  _listBox;
+  _value;
+
+  // Internal functions
+
+  get searchResultsCount() {
+    let total = 0;
+    this._menuOptions.forEach((menuOption) => {
+      //console.log("o", menuOption.options?.length === 0);
+      total += menuOption.options.length;
+    });
+    if (total === 0) {
+      this._focusedResultIndex = null;
+    }
+    return total;
+  }
+
+  search(newSearchTerm) {
+    this._searchTerm = newSearchTerm;
+    const newCleanSearchTerm = newSearchTerm
+      .trim()
+      .replace(/\*/g, "")
+      .toLowerCase();
+    if (this._cleanSearchTerm === newCleanSearchTerm) {
+      return;
+    }
+    this._cleanSearchTerm = newCleanSearchTerm;
+    if (newCleanSearchTerm) {
+      this._searchResultsCount = 0;
+      const menuOptions = [];
+      [...this._menuOptions].forEach((menuOption) => {
+        const options = menuOption.options.filter((option) => {
+          return option.label.toLowerCase().indexOf(newCleanSearchTerm) > -1;
+        }) ?? [];
+        console.log("options.length", options.length);
+        this._searchResultsCount += options.length;
+        menuOptions.push({
+          name: menuOption.name,
+          options: options,
+        });
+      });
+      this._menuOptions = menuOptions;
+    } else {
+      this._menuOptions = this._defaultMenuOptions;
+    }
+    console.log("total", this.searchResultsCount);
+  }
+
+  @api 
+  setSelection(selectedValue, optionLabel) {
+    this._value = optionLabel;
+    this._menuOptions?.forEach((menuOption) => {
+      menuOption.options.map((option) => {
+        option.selected = option.value === selectedValue ? true : false;
+        return option;
+      });
+    });
+  }
+
+  // Event handling
+
+  handleFocus() {
+    this._hasFocus = true;
+    this._focusedResultIndex = null;
+  }
+
+  handleBlur() {
+    if (this._cancelBlur) {
+      return;
+    }
+    this._hasFocus = false;
+  }
+
+  // EVENT HANDLING
+
+  handleInput(event) {
+    this.search(event.target.value);
+  }
+
+  scrollIntoViewIfNeeded(element, scrollingParent) {
+    const parentRect = scrollingParent.getBoundingClientRect();
+    const findMeRect = element.getBoundingClientRect();
+    if (findMeRect.top < parentRect.top) {
+        if (element.offsetTop + findMeRect.height < parentRect.height) {
+            scrollingParent.scrollTop = 0;
+        } else {
+            scrollingParent.scrollTop = element.offsetTop;
+        }
+    } else if (findMeRect.bottom > parentRect.bottom) {
+        scrollingParent.scrollTop += findMeRect.bottom - parentRect.bottom;
+    }
+}
+
+  handleKeyDown(event) {
+    if (this._focusedResultIndex === null) {
+        this._focusedResultIndex = -1;
+    }
+    if (event.keyCode === KEY_ARROW_DOWN) {
+        // If we hit 'down', select the next item, or cycle over.
+        this._focusedResultIndex++;
+        //console.log(this._focusedResultIndex);
+        if (this._focusedResultIndex >= this.searchResultsCount) {
+            this._focusedResultIndex = 0;
+        }
+        event.preventDefault();
+    } else if (event.keyCode === KEY_ARROW_UP) {
+        // If we hit 'up', select the previous item, or cycle over.
+        this._focusedResultIndex--;
+        if (this._focusedResultIndex < 0) {
+            this._focusedResultIndex = this.searchResultsCount - 1;
+        }
+        event.preventDefault();
+    } else if (event.keyCode === KEY_ENTER && this._hasFocus && this._focusedResultIndex >= 0) {
+        // If the user presses enter, and the box is open, and we have used arrows,
+        // treat this just like a click on the listbox item
+        //const selectedId = this._searchResults[this._focusedResultIndex].id;
+        //this.template.querySelector(`[data-recordid="${selectedId}"]`).click();
+        //event.preventDefault();
+    }
+    if (this._hasFocus && this.searchResultsCount > 0 && this._focusedResultIndex >= 0) {
+      const optionSelected = this.template.querySelector(
+          `[data-option-id="${this._focusedResultIndex}"]`
+      );
+      this.scrollIntoViewIfNeeded(optionSelected, this._listBox);
+      console.log("focusedResultIndex", this._focusedResultIndex);
+    }
+  }
+
+  handleComboboxMouseDown(event) {
+    const mainButton = 0;
+    if (event.button === mainButton) {
+      this._cancelBlur = true;
+    }
+  }
+
+  handleComboboxMouseUp() {
+    this._cancelBlur = false;
+    this.template.querySelector("input").focus();
+  }
+
+  handleOptionClick(event) {
+    const selectedValue = event.currentTarget.dataset.value;
+    const optionLabel = event.currentTarget.dataset.name;
+    this.setSelection(selectedValue, optionLabel);
+    this.template.querySelector("input").blur();
+    // const selectionEvent = new CustomEvent("select", {
+    //   detail: selectedValue,
+    // });
+    // this.dispatchEvent(selectionEvent);
+  }
+
+  // Style expressions
+
+  get comboxBoxClass() {
+    let css =
+      "slds-combobox slds-dropdown-trigger slds-dropdown-trigger_click ";
+    css += this._hasFocus ? "slds-is-open" : "";
+    return css;
+  }
+}

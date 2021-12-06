@@ -1,0 +1,10 @@
+.option-selected-icon {
+    --sds-c-icon-color-foreground-default: rgb(0, 112, 210);
+    padding-top: 0rem;
+}
+
+.option-value-text {
+    font-weight: 600;
+    font-size: 13px;
+    color: rgb(0, 0, 0);
+}
