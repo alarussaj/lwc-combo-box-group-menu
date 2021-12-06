@@ -8,3 +8,12 @@
     font-size: 13px;
     color: rgb(0, 0, 0);
 }
+
+.slds-combobox__input.caret-transparent {
+    caret-color: transparent;
+}
+
+.slds-combobox__input.has-custom-error {
+    border: 1px solid rgb(194, 57, 52);
+    box-shadow: rgb(194, 57, 52) 0 0 0 1px inset;
+}
